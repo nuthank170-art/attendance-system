@@ -1,0 +1,43 @@
+<h2>Employee List</h2>
+
+<a href="/add_employee">Add Employee</a>
+<br><br>
+
+<table border="1">
+
+<tr>
+<th>ID</th>
+<th>Name</th>
+<th>Designation</th>
+<th>Location</th>
+<th>Attendance</th>
+</tr>
+
+{% for e in employees %}
+
+<tr>
+
+<td>{{e[0]}}</td>
+<td>{{e[1]}}</td>
+<td>{{e[2]}}</td>
+<td>{{e[3]}}</td>
+
+<td>
+
+<a href="/attendance/{{e[0]}}">
+Mark
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+
+<br>
+
+<a href="/excel">
+Download Excel
+</a>
