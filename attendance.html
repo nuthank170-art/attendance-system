@@ -1,0 +1,34 @@
+<h2>Mark Attendance</h2>
+
+<video id="cam" width="300" autoplay></video>
+
+<form method="post">
+
+<input name="lat" id="lat">
+<input name="lon" id="lon">
+
+<br><br>
+
+<button>
+Punch IN / OUT
+</button>
+
+</form>
+
+<script>
+
+navigator.mediaDevices.getUserMedia({video:true})
+
+.then(s=>{
+document.getElementById("cam").srcObject=s
+})
+
+navigator.geolocation.getCurrentPosition(p=>{
+
+document.getElementById("lat").value=p.coords.latitude
+
+document.getElementById("lon").value=p.coords.longitude
+
+})
+
+</script>
