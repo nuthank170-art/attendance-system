@@ -74,23 +74,22 @@ def add_employee():
         return redirect("/dashboard")
 
     return render_template("add_employee.html")
-
 @app.route("/attendance/<emp_id>", methods=["GET","POST"])
 def attendance(emp_id):
 
-   if request.method == "POST":
+    if request.method == "POST":
 
-    type = request.form["type"]
-    img = request.form["image"]
+        type = request.form["type"]
+        img = request.form["image"]
 
-    india = pytz.timezone("Asia/Kolkata")
-    now = datetime.now(india)
+        india = pytz.timezone("Asia/Kolkata")
+        now = datetime.now(india)
 
-    date = now.strftime("%Y-%m-%d")
-    time = now.strftime("%H:%M:%S")
-    
-    con = db()
-    cur = con.cursor()
+        date = now.strftime("%Y-%m-%d")
+        time = now.strftime("%H:%M:%S")
+
+        con = db()
+        cur = con.cursor()
 
         cur.execute(
         "SELECT * FROM attendance WHERE emp_id=? AND date=?",
@@ -126,7 +125,6 @@ def attendance(emp_id):
         return redirect(f"/attendance/{emp_id}")
 
 
-    # show time on page
     con = db()
     cur = con.cursor()
 
@@ -156,7 +154,6 @@ def attendance(emp_id):
     in_time=in_time,
     out_time=out_time
     )
-
 
 @app.route("/report",methods=["GET","POST"])
 def report():
