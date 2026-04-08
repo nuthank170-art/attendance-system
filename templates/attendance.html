@@ -25,6 +25,8 @@ box-shadow:0 0 10px gray;
 }
 
 video{
+width:100%;
+max-width:420px;
 border:2px solid #ccc;
 border-radius:8px;
 }
@@ -65,7 +67,7 @@ border:1px solid gray;
 
 <h2>Camera Attendance</h2>
 
-<video id="cam" width="420" height="320" autoplay playsinline muted></video>
+<video id="cam" autoplay playsinline muted></video>
 
 <form method="post">
 
@@ -94,42 +96,33 @@ OUT
 
 <script>
 
-async function startCamera(){
+navigator.mediaDevices.getUserMedia({video:true})
+.then(function(stream){
 
-try{
+document.getElementById("cam").srcObject = stream;
 
-const stream = await navigator.mediaDevices.getUserMedia({
-video:true,
-audio:false
 })
+.catch(function(){
 
-document.getElementById("cam").srcObject = stream
+alert("Please allow camera permission");
 
-}catch(e){
-
-alert("Allow camera permission")
-
-}
-
-}
-
-startCamera()
+});
 
 function capture(type){
 
-document.getElementById("type").value = type
+document.getElementById("type").value = type;
 
-let video=document.getElementById("cam")
+let video = document.getElementById("cam");
 
-let canvas=document.createElement("canvas")
+let canvas = document.createElement("canvas");
 
-canvas.width=420
-canvas.height=320
+canvas.width = 420;
+canvas.height = 320;
 
-canvas.getContext("2d").drawImage(video,0,0)
+canvas.getContext("2d").drawImage(video,0,0);
 
 document.getElementById("image").value =
-canvas.toDataURL("image/jpeg")
+canvas.toDataURL("image/jpeg");
 
 }
 
