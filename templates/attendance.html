@@ -77,21 +77,28 @@ border:1px solid gray;
 <br>
 
 <button type="submit" class="inbtn" onclick="capture('IN')">
-IN
+Punch IN
 </button>
 
 <button type="submit" class="outbtn" onclick="capture('OUT')">
-OUT
+Punch OUT
 </button>
 
 </form>
 
-<h3>IN Photo</h3>
+<h3>IN</h3>
+
 <img src="/static/{{emp_id}}_in.jpg">
 
-<h3>OUT Photo</h3>
+<p>{{in_time}}</p>
+
+<h3>OUT</h3>
+
 <img src="/static/{{emp_id}}_out.jpg">
 
+<p>{{out_time}}</p>
+
+  
 </div>
 
 <script>
