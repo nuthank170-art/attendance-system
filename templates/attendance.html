@@ -4,7 +4,7 @@
 
 <head>
 
-<title>Attendance</title>
+<title>Camera Attendance</title>
 
 <style>
 
@@ -16,20 +16,17 @@ text-align:center;
 
 .box{
 background:white;
-width:420px;
+width:450px;
 margin:auto;
-margin-top:40px;
+margin-top:30px;
 padding:20px;
 border-radius:8px;
 box-shadow:0 0 10px gray;
 }
 
 video{
-
 border:2px solid #ccc;
 border-radius:8px;
-object-fit:cover;
-  
 }
 
 button{
@@ -52,7 +49,7 @@ color:white;
 }
 
 img{
-width:120px;
+width:140px;
 margin:5px;
 border-radius:5px;
 border:1px solid gray;
@@ -68,88 +65,76 @@ border:1px solid gray;
 
 <h2>Camera Attendance</h2>
 
-<video id="cam" width="420" height="320" autoplay></video>
+<video id="cam" width="420" height="320" autoplay playsinline muted></video>
 
 <form method="post">
 
 <input type="hidden" name="type" id="type">
-
 <input type="hidden" name="image" id="image">
 
 <br>
 
-<button class="inbtn"
-type="submit"
-onclick="setType('IN')">
-
+<button type="submit" class="inbtn" onclick="capture('IN')">
 IN
-
 </button>
 
-<button class="outbtn"
-type="submit"
-onclick="setType('OUT')">
-
+<button type="submit" class="outbtn" onclick="capture('OUT')">
 OUT
-
 </button>
 
 </form>
 
 <h3>IN Photo</h3>
-
 <img src="/static/{{emp_id}}_in.jpg">
 
 <h3>OUT Photo</h3>
-
 <img src="/static/{{emp_id}}_out.jpg">
 
 </div>
 
 <script>
 
-navigator.mediaDevices.getUserMedia({video:true})
-.then(stream=>{
-document.getElementById("cam").srcObject = stream
+async function startCamera(){
+
+try{
+
+const stream = await navigator.mediaDevices.getUserMedia({
+video:true,
+audio:false
 })
 
-function setType(t){
+document.getElementById("cam").srcObject = stream
 
-document.getElementById("type").value = t
+}catch(e){
 
-<script>
+alert("Allow camera permission")
 
-navigator.mediaDevices.getUserMedia({
-video:{
-width:640,
-height:480,
-facingMode:"user"
 }
-})
 
-.then(stream=>{
-document.getElementById("cam").srcObject = stream
-})
+}
 
-function setType(t){
+startCamera()
 
-document.getElementById("type").value = t
+function capture(type){
 
-let video = document.getElementById("cam")
+document.getElementById("type").value = type
 
-let canvas = document.createElement("canvas")
+let video=document.getElementById("cam")
 
-canvas.width = 640
-canvas.height = 480
+let canvas=document.createElement("canvas")
+
+canvas.width=420
+canvas.height=320
 
 canvas.getContext("2d").drawImage(video,0,0)
 
-document.getElementById("image").value = canvas.toDataURL("image/jpeg",0.9)
+document.getElementById("image").value =
+canvas.toDataURL("image/jpeg")
 
 }
 
 </script>
-  
+
 </body>
 
 </html>
