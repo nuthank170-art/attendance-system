@@ -77,6 +77,9 @@ def add_employee():
 @app.route("/attendance/<emp_id>",methods=["GET","POST"])
 def attendance(emp_id):
 
+@app.route("/attendance/<emp_id>",methods=["GET","POST"])
+def attendance(emp_id):
+
     if request.method=="POST":
 
         type=request.form["type"]
@@ -89,56 +92,71 @@ def attendance(emp_id):
         con=db()
         cur=con.cursor()
 
-        cur.execute("select * from attendance where emp_id=? and date=?",(emp_id,date))
+        cur.execute(
+        "select * from attendance where emp_id=? and date=?",
+        (emp_id,date)
+        )
+
         row=cur.fetchone()
 
         if type=="IN":
 
-            cur.execute("insert into attendance values(?,?,?,?)",
-            (emp_id,date,time,""))
+            cur.execute(
+            "insert into attendance values(?,?,?,?)",
+            (emp_id,date,time,"")
+            )
 
             save_image(img,f"{emp_id}_in.jpg")
 
         else:
 
-            cur.execute("""
+            cur.execute(
+            """
             update attendance
             set out_time=?
             where emp_id=? and date=?
-            """,(time,emp_id,date))
+            """,
+            (time,emp_id,date)
+            )
 
             save_image(img,f"{emp_id}_out.jpg")
 
         con.commit()
 
-        return redirect("/dashboard")
+        return redirect(f"/attendance/{emp_id}")
 
-       con=db()
-       cur=con.cursor()
 
-       cur.execute("""
-       select in_time,out_time
-       from attendance
-       where emp_id=?
-       order by date desc
-       limit 1
-       """,(emp_id,))
+    # GET method → show time
+    con=db()
+    cur=con.cursor()
 
-       row=cur.fetchone()
+    cur.execute(
+    """
+    select in_time,out_time
+    from attendance
+    where emp_id=?
+    order by date desc
+    limit 1
+    """,
+    (emp_id,)
+    )
 
-       in_time=""
-       out_time=""
+    row=cur.fetchone()
 
-       if row:
-       in_time=row[0]
-       out_time=row[1]
+    in_time=""
+    out_time=""
 
-       return render_template(
-       "attendance.html",
-       emp_id=emp_id,
-       in_time=in_time,
-       out_time=out_time
-       )
+    if row:
+        in_time=row[0]
+        out_time=row[1]
+
+    return render_template(
+    "attendance.html",
+    emp_id=emp_id,
+    in_time=in_time,
+    out_time=out_time
+    )
+
 
 @app.route("/report",methods=["GET","POST"])
 def report():
