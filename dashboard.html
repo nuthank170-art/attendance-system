@@ -1,43 +1,47 @@
-<h2>Employee List</h2>
+<!DOCTYPE html>
 
-<a href="/add_employee">Add Employee</a>
-<br><br>
+<html>
+<head>
+<style>
+body{font-family:Arial;background:#f4f6f9}
+.top{background:#2c6fb7;color:white;padding:10px}
+.card{background:white;padding:15px;margin:10px;border-radius:6px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border:1px solid #ccc;text-align:center}
+.btn{padding:6px 10px;background:#5cb85c;color:white;border:none}
+</style>
+</head>
 
-<table border="1">
+<body>
 
+<div class="top">
+<h2>Admin Dashboard</h2>
+<a href="/add_employee">Add Employee</a> |
+<a href="/report">Report</a>
+</div>
+
+<div class="card">
+<table>
 <tr>
-<th>ID</th>
-<th>Name</th>
-<th>Designation</th>
-<th>Location</th>
-<th>Attendance</th>
+<th>ID</th><th>Name</th><th>Designation</th><th>Action</th>
 </tr>
 
 {% for e in employees %}
 
 <tr>
-
 <td>{{e[0]}}</td>
 <td>{{e[1]}}</td>
 <td>{{e[2]}}</td>
-<td>{{e[3]}}</td>
-
 <td>
-
 <a href="/attendance/{{e[0]}}">
-Mark
+<button class="btn">Mark</button>
 </a>
-
 </td>
-
 </tr>
-
 {% endfor %}
 
 </table>
+</div>
 
-<br>
-
-<a href="/excel">
-Download Excel
-</a>
+</body>
+</html>
