@@ -74,35 +74,32 @@ def add_employee():
 
     return render_template("add_employee.html")
 
-@app.route("/attendance/<emp_id>",methods=["GET","POST"])
+@app.route("/attendance/<emp_id>", methods=["GET","POST"])
 def attendance(emp_id):
 
-@app.route("/attendance/<emp_id>",methods=["GET","POST"])
-def attendance(emp_id):
+    if request.method == "POST":
 
-    if request.method=="POST":
+        type = request.form["type"]
+        img = request.form["image"]
 
-        type=request.form["type"]
-        img=request.form["image"]
+        now = datetime.now()
+        date = now.strftime("%Y-%m-%d")
+        time = now.strftime("%H:%M:%S")
 
-        now=datetime.now()
-        date=now.strftime("%Y-%m-%d")
-        time=now.strftime("%H:%M:%S")
-
-        con=db()
-        cur=con.cursor()
+        con = db()
+        cur = con.cursor()
 
         cur.execute(
-        "select * from attendance where emp_id=? and date=?",
+        "SELECT * FROM attendance WHERE emp_id=? AND date=?",
         (emp_id,date)
         )
 
-        row=cur.fetchone()
+        row = cur.fetchone()
 
-        if type=="IN":
+        if type == "IN":
 
             cur.execute(
-            "insert into attendance values(?,?,?,?)",
+            "INSERT INTO attendance VALUES (?,?,?,?)",
             (emp_id,date,time,"")
             )
 
@@ -112,9 +109,9 @@ def attendance(emp_id):
 
             cur.execute(
             """
-            update attendance
-            set out_time=?
-            where emp_id=? and date=?
+            UPDATE attendance
+            SET out_time=?
+            WHERE emp_id=? AND date=?
             """,
             (time,emp_id,date)
             )
@@ -126,29 +123,29 @@ def attendance(emp_id):
         return redirect(f"/attendance/{emp_id}")
 
 
-    # GET method → show time
-    con=db()
-    cur=con.cursor()
+    # show time on page
+    con = db()
+    cur = con.cursor()
 
     cur.execute(
     """
-    select in_time,out_time
-    from attendance
-    where emp_id=?
-    order by date desc
-    limit 1
+    SELECT in_time,out_time
+    FROM attendance
+    WHERE emp_id=?
+    ORDER BY date DESC
+    LIMIT 1
     """,
     (emp_id,)
     )
 
-    row=cur.fetchone()
+    row = cur.fetchone()
 
-    in_time=""
-    out_time=""
+    in_time = ""
+    out_time = ""
 
     if row:
-        in_time=row[0]
-        out_time=row[1]
+        in_time = row[0]
+        out_time = row[1]
 
     return render_template(
     "attendance.html",
