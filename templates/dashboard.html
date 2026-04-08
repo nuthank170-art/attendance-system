@@ -1,61 +1,17 @@
-<!DOCTYPE html>
+<h2>Admin Dashboard</h2>
 
-<html>
+<a href="/add_employee">Add Employee</a> |
+<a href="/report">Report</a> |
+<a href="/excel">Excel</a>
 
-<head>
-
-<title>Dashboard</title>
-
-<style>
-
-table{
-border-collapse:collapse;
-width:80%;
-margin:auto
-}
-
-th,td{
-border:1px solid black;
-padding:10px;
-text-align:center
-}
-
-button{
-padding:5px 10px
-}
-
-</style>
-
-</head>
-
-<body>
-
-<h2 align="center">Employee List</h2>
-
-<div align="center">
-
-<a href="/add_employee">
-
-<button>Add Employee</button>
-
-</a>
-
-<br><br>
-
-<table>
+<table border="1">
 
 <tr>
-
 <th>ID</th>
-
 <th>Name</th>
-
 <th>Designation</th>
-
 <th>Location</th>
-
-<th>Attendance</th>
-
+<th>Action</th>
 </tr>
 
 {% for e in employees %}
@@ -63,18 +19,15 @@ padding:5px 10px
 <tr>
 
 <td>{{e[0]}}</td>
-
 <td>{{e[1]}}</td>
-
 <td>{{e[2]}}</td>
-
 <td>{{e[3]}}</td>
 
 <td>
 
 <a href="/attendance/{{e[0]}}">
 
-<button>Mark</button>
+Mark
 
 </a>
 
@@ -85,17 +38,3 @@ padding:5px 10px
 {% endfor %}
 
 </table>
-
-<br>
-
-<a href="/excel">
-
-<button>Download Excel</button>
-
-</a>
-
-</div>
-
-</body>
-
-</html>
