@@ -185,6 +185,47 @@ def excel():
 
     return send_file("report.xlsx",as_attachment=True)
 
+@app.route("/delete_employee/<id>")
+def delete_employee(id):
+
+    con=db()
+    cur=con.cursor()
+
+    cur.execute("delete from employees where id=?",(id,))
+    con.commit()
+
+    return redirect("/dashboard")
+
+
+@app.route("/edit_employee/<id>",methods=["GET","POST"])
+def edit_employee(id):
+
+    con=db()
+    cur=con.cursor()
+
+    if request.method=="POST":
+
+        cur.execute("""
+        update employees
+        set name=?,designation=?,location=?
+        where id=?
+        """,
+        (
+        request.form["name"],
+        request.form["designation"],
+        request.form["location"],
+        id
+        ))
+
+        con.commit()
+
+        return redirect("/dashboard")
+
+    cur.execute("select * from employees where id=?",(id,))
+    emp=cur.fetchone()
+
+    return render_template("edit_employee.html",emp=emp)
+    
 if __name__=="__main__":
 
     port=int(os.environ.get("PORT",5000))
