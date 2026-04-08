@@ -16,19 +16,20 @@ text-align:center;
 
 .box{
 background:white;
-width:450px;
+width:420px;
 margin:auto;
 margin-top:30px;
 padding:20px;
-border-radius:8px;
+border-radius:10px;
 box-shadow:0 0 10px gray;
 }
 
 video{
-width:100%;
-max-width:420px;
+width:320px;
+height:320px;
+border-radius:10px;
 border:2px solid #ccc;
-border-radius:8px;
+object-fit:cover;
 }
 
 button{
@@ -51,10 +52,16 @@ color:white;
 }
 
 img{
-width:140px;
+width:150px;
 margin:5px;
-border-radius:5px;
+border-radius:6px;
 border:1px solid gray;
+}
+
+.time{
+font-size:18px;
+font-weight:bold;
+margin-bottom:15px;
 }
 
 </style>
@@ -90,46 +97,58 @@ Punch OUT
 
 <img src="/static/{{emp_id}}_in.jpg">
 
-<p>{{in_time}}</p>
+<div class="time">
+{{in_time}}
+</div>
 
 <h3>OUT</h3>
 
 <img src="/static/{{emp_id}}_out.jpg">
 
-<p>{{out_time}}</p>
+<div class="time">
+{{out_time}}
+</div>
 
-  
 </div>
 
 <script>
 
-navigator.mediaDevices.getUserMedia({video:true})
-.then(function(stream){
+async function startCamera(){
 
-document.getElementById("cam").srcObject = stream;
+const stream = await navigator.mediaDevices.getUserMedia({
+
+video:{
+width:{ideal:720},
+height:{ideal:720},
+facingMode:"user"
+}
 
 })
-.catch(function(){
 
-alert("Please allow camera permission");
+document.getElementById("cam").srcObject = stream
 
-});
+}
+
+startCamera()
+
 
 function capture(type){
 
-document.getElementById("type").value = type;
+document.getElementById("type").value = type
 
-let video = document.getElementById("cam");
+let video = document.getElementById("cam")
 
-let canvas = document.createElement("canvas");
+let canvas = document.createElement("canvas")
 
-canvas.width = 420;
-canvas.height = 320;
+canvas.width = 320
+canvas.height = 320
 
-canvas.getContext("2d").drawImage(video,0,0);
+let ctx = canvas.getContext("2d")
+
+ctx.drawImage(video,0,0,320,320)
 
 document.getElementById("image").value =
-canvas.toDataURL("image/jpeg");
+canvas.toDataURL("image/jpeg",0.95)
 
 }
 
