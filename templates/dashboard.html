@@ -1,8 +1,6 @@
 <h2>Admin Dashboard</h2>
 
-<a href="/add_employee">Add Employee</a> |
-<a href="/report">Report</a> |
-<a href="/excel">Excel</a>
+<a href="/add_employee">Add Employee</a> | <a href="/report">Report</a> | <a href="/excel">Excel</a>
 
 <table border="1">
 
@@ -25,9 +23,14 @@
 
 <td>
 
-<a href="/attendance/{{e[0]}}">
+<a href="/attendance/{{e[0]}}">Mark</a> |
 
-Mark
+<a href="/edit_employee/{{e[0]}}">Edit</a> |
+
+<a href="/delete_employee/{{e[0]}}"
+onclick="return confirm('Delete employee?')">
+
+Delete
 
 </a>
 
