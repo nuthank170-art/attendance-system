@@ -6,39 +6,47 @@
 
 <title>Camera Attendance</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
 
 body{
 font-family:Arial;
 background:#f2f5f9;
 text-align:center;
+margin:0;
+padding:0;
 }
 
 .box{
 background:white;
-width:420px;
+width:95%;
+max-width:420px;
 margin:auto;
-margin-top:30px;
+margin-top:20px;
 padding:20px;
-border-radius:10px;
-box-shadow:0 0 10px gray;
+border-radius:12px;
+box-shadow:0 0 10px rgba(0,0,0,0.2);
 }
 
 video{
-width:320px;
-height:320px;
-border-radius:10px;
+width:100%;
+max-width:320px;
+height:auto;
+border-radius:12px;
 border:2px solid #ccc;
 object-fit:cover;
+background:black;
 }
 
 button{
-padding:10px 20px;
-margin:10px;
-font-size:16px;
+padding:12px 18px;
+margin:8px;
+font-size:17px;
 border:none;
-border-radius:5px;
+border-radius:6px;
 cursor:pointer;
+width:130px;
 }
 
 .inbtn{
@@ -52,16 +60,22 @@ color:white;
 }
 
 img{
-width:150px;
-margin:5px;
-border-radius:6px;
-border:1px solid gray;
+width:140px;
+margin-top:5px;
+border-radius:8px;
+border:1px solid #bbb;
 }
 
 .time{
 font-size:18px;
 font-weight:bold;
 margin-bottom:15px;
+color:#333;
+}
+
+h3{
+margin-bottom:5px;
+margin-top:15px;
 }
 
 </style>
@@ -80,6 +94,7 @@ margin-bottom:15px;
 
 <input type="hidden" name="type" id="type">
 <input type="hidden" name="image" id="image">
+<input type="hidden" name="location" id="location">
 
 <br>
 
@@ -115,17 +130,27 @@ Punch OUT
 
 async function startCamera(){
 
+try{
+
 const stream = await navigator.mediaDevices.getUserMedia({
 
 video:{
 width:{ideal:720},
 height:{ideal:720},
 facingMode:"user"
-}
+},
+
+audio:false
 
 })
 
 document.getElementById("cam").srcObject = stream
+
+}catch(e){
+
+alert("Please allow camera permission")
+
+}
 
 }
 
@@ -149,6 +174,30 @@ ctx.drawImage(video,0,0,320,320)
 
 document.getElementById("image").value =
 canvas.toDataURL("image/jpeg",0.95)
+
+}
+
+
+/* GPS capture */
+
+if(navigator.geolocation){
+
+navigator.geolocation.getCurrentPosition(
+
+function(pos){
+
+document.getElementById("location").value =
+pos.coords.latitude + "," + pos.coords.longitude
+
+},
+
+function(){
+
+document.getElementById("location").value="GPS not allowed"
+
+}
+
+)
 
 }
 
