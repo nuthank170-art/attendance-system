@@ -89,9 +89,8 @@ def attendance(emp_id):
     date = now.strftime("%Y-%m-%d")
     time = now.strftime("%H:%M:%S")
     
-
-        con = db()
-        cur = con.cursor()
+    con = db()
+    cur = con.cursor()
 
         cur.execute(
         "SELECT * FROM attendance WHERE emp_id=? AND date=?",
