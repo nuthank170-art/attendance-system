@@ -1,12 +1,134 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<title>Attendance</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f2f5f9;
+text-align:center;
+}
+
+.box{
+background:white;
+width:420px;
+margin:auto;
+margin-top:40px;
+padding:20px;
+border-radius:8px;
+box-shadow:0 0 10px gray;
+}
+
+video{
+border:2px solid #ccc;
+border-radius:6px;
+}
+
+button{
+padding:10px 20px;
+margin:10px;
+font-size:16px;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+.inbtn{
+background:#28a745;
+color:white;
+}
+
+.outbtn{
+background:#007bff;
+color:white;
+}
+
+img{
+width:120px;
+margin:5px;
+border-radius:5px;
+border:1px solid gray;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>Camera Attendance</h2>
+
+<video id="cam" width="320" height="240" autoplay></video>
+
 <form method="post">
 
-<input name="type" id="type" hidden>
-<input name="image" id="image" hidden>
+<input type="hidden" name="type" id="type">
 
-<br><br>
+<input type="hidden" name="image" id="image">
 
-<button type="submit" onclick="setType('IN')">IN</button>
+<br>
 
-<button type="submit" onclick="setType('OUT')">OUT</button>
+<button class="inbtn"
+type="submit"
+onclick="setType('IN')">
+
+IN
+
+</button>
+
+<button class="outbtn"
+type="submit"
+onclick="setType('OUT')">
+
+OUT
+
+</button>
 
 </form>
+
+<h3>IN Photo</h3>
+
+<img src="/static/{{emp_id}}_in.jpg">
+
+<h3>OUT Photo</h3>
+
+<img src="/static/{{emp_id}}_out.jpg">
+
+</div>
+
+<script>
+
+navigator.mediaDevices.getUserMedia({video:true})
+.then(stream=>{
+document.getElementById("cam").srcObject = stream
+})
+
+function setType(t){
+
+document.getElementById("type").value = t
+
+let video = document.getElementById("cam")
+
+let canvas = document.createElement("canvas")
+
+canvas.width = 320
+canvas.height = 240
+
+canvas.getContext("2d").drawImage(video,0,0)
+
+document.getElementById("image").value = canvas.toDataURL()
+
+}
+
+</script>
+
+</body>
+
+</html>
