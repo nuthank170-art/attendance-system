@@ -25,8 +25,11 @@ box-shadow:0 0 10px gray;
 }
 
 video{
+
 border:2px solid #ccc;
-border-radius:6px;
+border-radius:8px;
+object-fit:cover;
+  
 }
 
 button{
@@ -65,7 +68,7 @@ border:1px solid gray;
 
 <h2>Camera Attendance</h2>
 
-<video id="cam" width="320" height="240" autoplay></video>
+<video id="cam" width="420" height="320" autoplay></video>
 
 <form method="post">
 
@@ -114,21 +117,39 @@ function setType(t){
 
 document.getElementById("type").value = t
 
+<script>
+
+navigator.mediaDevices.getUserMedia({
+video:{
+width:640,
+height:480,
+facingMode:"user"
+}
+})
+
+.then(stream=>{
+document.getElementById("cam").srcObject = stream
+})
+
+function setType(t){
+
+document.getElementById("type").value = t
+
 let video = document.getElementById("cam")
 
 let canvas = document.createElement("canvas")
 
-canvas.width = 320
-canvas.height = 240
+canvas.width = 640
+canvas.height = 480
 
 canvas.getContext("2d").drawImage(video,0,0)
 
-document.getElementById("image").value = canvas.toDataURL()
+document.getElementById("image").value = canvas.toDataURL("image/jpeg",0.9)
 
 }
 
 </script>
-
+  
 </body>
 
 </html>
