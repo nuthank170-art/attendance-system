@@ -1,71 +1,12 @@
-<h2>Camera Attendance</h2>
-
-<video id="cam" width="300" autoplay></video>
-
 <form method="post">
 
 <input name="type" id="type" hidden>
-
 <input name="image" id="image" hidden>
 
-<br>
+<br><br>
 
-<button onclick="setType('IN')">
+<button type="submit" onclick="setType('IN')">IN</button>
 
-IN
-
-</button>
-
-<button onclick="setType('OUT')">
-
-OUT
-
-</button>
+<button type="submit" onclick="setType('OUT')">OUT</button>
 
 </form>
-
-<br>
-
-IN PHOTO
-
-<img src="/static/{{emp_id}}_in.jpg" width="120">
-
-OUT PHOTO
-
-<img src="/static/{{emp_id}}_out.jpg" width="120">
-
-<script>
-
-function setType(t){
-
-document.getElementById("type").value=t
-
-capture()
-
-}
-
-navigator.mediaDevices.getUserMedia({video:true})
-
-.then(s=>{
-
-document.getElementById("cam").srcObject=s
-
-})
-
-function capture(){
-
-let v=document.getElementById("cam")
-
-let c=document.createElement("canvas")
-
-c.width=300
-
-c.height=200
-
-c.getContext("2d").drawImage(v,0,0)
-
-document.getElementById("image").value=c.toDataURL()
-
-}
-
-</script>
