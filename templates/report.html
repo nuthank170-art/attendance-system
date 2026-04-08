@@ -1,0 +1,37 @@
+<h2>Report</h2>
+
+<form method="post">
+
+From <input type="date" name="from">
+
+To <input type="date" name="to">
+
+<button>View</button>
+
+</form>
+
+<table border="1">
+
+<tr>
+
+<th>Emp</th>
+<th>Date</th>
+<th>IN</th>
+<th>OUT</th>
+
+</tr>
+
+{% for r in data %}
+
+<tr>
+
+<td>{{r[0]}}</td>
+<td>{{r[1]}}</td>
+<td>{{r[2]}}</td>
+<td>{{r[3]}}</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
