@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, send_file
 import sqlite3, os, base64
+import pytz
 from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
@@ -77,14 +78,17 @@ def add_employee():
 @app.route("/attendance/<emp_id>", methods=["GET","POST"])
 def attendance(emp_id):
 
-    if request.method == "POST":
+   if request.method == "POST":
 
-        type = request.form["type"]
-        img = request.form["image"]
+    type = request.form["type"]
+    img = request.form["image"]
 
-        now = datetime.now()
-        date = now.strftime("%Y-%m-%d")
-        time = now.strftime("%H:%M:%S")
+    india = pytz.timezone("Asia/Kolkata")
+    now = datetime.now(india)
+
+    date = now.strftime("%Y-%m-%d")
+    time = now.strftime("%H:%M:%S")
+    
 
         con = db()
         cur = con.cursor()
