@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, send_file
-import sqlite3
+import sqlite3, os, base64
 from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import PatternFill
@@ -9,34 +9,36 @@ app = Flask(__name__)
 def db():
     return sqlite3.connect("database.db")
 
-# create tables first time
 def create_tables():
-    con = db()
-    cur = con.cursor()
+    con=db()
+    cur=con.cursor()
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS employees(
-        id TEXT,
-        name TEXT,
-        designation TEXT,
-        location TEXT
-    )
+    id TEXT,
+    name TEXT,
+    designation TEXT,
+    location TEXT)
     """)
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS attendance(
-        emp_id TEXT,
-        date TEXT,
-        in_time TEXT,
-        out_time TEXT,
-        latitude TEXT,
-        longitude TEXT
-    )
+    emp_id TEXT,
+    date TEXT,
+    in_time TEXT,
+    out_time TEXT)
     """)
 
     con.commit()
 
 create_tables()
+
+def save_image(data,name):
+    if data=="":
+        return
+    img=data.split(",")[1]
+    with open("static/"+name,"wb") as f:
+        f.write(base64.b64decode(img))
 
 @app.route("/")
 def login():
@@ -44,27 +46,27 @@ def login():
 
 @app.route("/dashboard")
 def dashboard():
-    con = db()
-    cur = con.cursor()
-    cur.execute("SELECT * FROM employees")
-    data = cur.fetchall()
+    con=db()
+    cur=con.cursor()
+    cur.execute("select * from employees")
+    data=cur.fetchall()
     return render_template("dashboard.html", employees=data)
 
-@app.route("/add_employee", methods=["GET","POST"])
+@app.route("/add_employee",methods=["GET","POST"])
 def add_employee():
 
     if request.method=="POST":
 
-        emp_id = request.form["id"]
-        name = request.form["name"]
-        desig = request.form["designation"]
-        loc = request.form["location"]
+        con=db()
+        cur=con.cursor()
 
-        con = db()
-        cur = con.cursor()
-
-        cur.execute("INSERT INTO employees VALUES(?,?,?,?)",
-                    (emp_id,name,desig,loc))
+        cur.execute("insert into employees values(?,?,?,?)",
+        (
+        request.form["id"],
+        request.form["name"],
+        request.form["designation"],
+        request.form["location"]
+        ))
 
         con.commit()
 
@@ -72,43 +74,40 @@ def add_employee():
 
     return render_template("add_employee.html")
 
-@app.route("/attendance/<emp_id>", methods=["GET","POST"])
+@app.route("/attendance/<emp_id>",methods=["GET","POST"])
 def attendance(emp_id):
 
     if request.method=="POST":
 
-        lat = request.form["lat"]
-        lon = request.form["lon"]
+        type=request.form["type"]
+        img=request.form["image"]
 
-        now = datetime.now()
+        now=datetime.now()
+        date=now.strftime("%Y-%m-%d")
+        time=now.strftime("%H:%M:%S")
 
-        date = now.strftime("%Y-%m-%d")
-        time = now.strftime("%H:%M")
+        con=db()
+        cur=con.cursor()
 
-        con = db()
-        cur = con.cursor()
+        cur.execute("select * from attendance where emp_id=? and date=?",(emp_id,date))
+        row=cur.fetchone()
 
-        cur.execute("""
-        SELECT * FROM attendance
-        WHERE emp_id=? AND date=?
-        """,(emp_id,date))
+        if type=="IN":
 
-        row = cur.fetchone()
+            cur.execute("insert into attendance values(?,?,?,?)",
+            (emp_id,date,time,""))
 
-        if row is None:
-
-            cur.execute("""
-            INSERT INTO attendance
-            VALUES(?,?,?,?,?,?)
-            """,(emp_id,date,time,"",lat,lon))
+            save_image(img,f"{emp_id}_in.jpg")
 
         else:
 
             cur.execute("""
-            UPDATE attendance
-            SET out_time=?
-            WHERE emp_id=? AND date=?
+            update attendance
+            set out_time=?
+            where emp_id=? and date=?
             """,(time,emp_id,date))
+
+            save_image(img,f"{emp_id}_out.jpg")
 
         con.commit()
 
@@ -116,71 +115,78 @@ def attendance(emp_id):
 
     return render_template("attendance.html", emp_id=emp_id)
 
-@app.route("/excel")
+@app.route("/report",methods=["GET","POST"])
+def report():
 
+    data=[]
+
+    if request.method=="POST":
+
+        f=request.form["from"]
+        t=request.form["to"]
+
+        con=db()
+        cur=con.cursor()
+
+        cur.execute("""
+        select * from attendance
+        where date between ? and ?
+        """,(f,t))
+
+        data=cur.fetchall()
+
+    return render_template("report.html",data=data)
+
+@app.route("/excel")
 def excel():
 
     con=db()
     cur=con.cursor()
 
-    cur.execute("SELECT * FROM employees")
-    employees=cur.fetchall()
+    cur.execute("select * from attendance")
+    rows=cur.fetchall()
 
     wb=Workbook()
     ws=wb.active
 
-    ws.append(["Employee","Date","Status"])
+    ws.append(["Emp","Date","Status"])
 
     green=PatternFill(start_color="00FF00",fill_type="solid")
     yellow=PatternFill(start_color="FFFF00",fill_type="solid")
     red=PatternFill(start_color="FF0000",fill_type="solid")
 
-    for e in employees:
+    for r in rows:
 
-        cur.execute("""
-        SELECT in_time,out_time,date
-        FROM attendance
-        WHERE emp_id=?
-        """,(e[0],))
+        if r[3]=="":
+            status="A"
+            color=red
 
-        rows=cur.fetchall()
+        else:
 
-        for r in rows:
+            t1=datetime.strptime(r[2],"%H:%M:%S")
+            t2=datetime.strptime(r[3],"%H:%M:%S")
 
-            if r[1]=="":
+            hrs=(t2-t1).seconds/3600
+
+            if hrs>=8:
+                status="P"
+                color=green
+            elif hrs>=4:
+                status="PH"
+                color=yellow
+            else:
                 status="A"
                 color=red
 
-            else:
+        ws.append([r[0],r[1],status])
+        ws.cell(ws.max_row,3).fill=color
 
-                t1=datetime.strptime(r[0],"%H:%M")
-                t2=datetime.strptime(r[1],"%H:%M")
+    wb.save("report.xlsx")
 
-                hrs=(t2-t1).seconds/3600
+    return send_file("report.xlsx",as_attachment=True)
 
-                if hrs>=8:
-                    status="P"
-                    color=green
+if __name__=="__main__":
 
-                elif hrs>=4:
-                    status="PH"
-                    color=yellow
+    port=int(os.environ.get("PORT",5000))
 
-                else:
-                    status="A"
-                    color=red
-
-            ws.append([e[1],r[2],status])
-
-            ws.cell(ws.max_row,3).fill=color
-
-    file="attendance.xlsx"
-    wb.save(file)
-
-    return send_file(file,as_attachment=True)
-
-import os
-
-port = int(os.environ.get("PORT", 5000))
-
-app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0",port=port)
