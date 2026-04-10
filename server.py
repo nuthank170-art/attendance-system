@@ -1,5 +1,5 @@
-from flask import Flask, render_template, request, redirect, send_file
-import sqlite3, os, base64
+from flask import Flask, render_template, request, redirect, send_file, jsonify
+import sqlite3, os, base64, requests
 import pytz
 from datetime import datetime
 from openpyxl import Workbook
@@ -7,9 +7,36 @@ from openpyxl.styles import PatternFill
 
 app = Flask(__name__)
 
+# ---------------- SUPABASE CONFIG ----------------
+
+SUPABASE_URL = "https://odbkrbarwhhzfemqfbts.supabase.co"
+SUPABASE_KEY = "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh"
+
+def send_to_supabase(emp_id,date,in_time,out_time):
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "employee_id": emp_id,
+        "name": emp_id,
+        "date": date + " " + in_time,
+        "image_url": emp_id
+    }
+
+    requests.post(
+        f"{SUPABASE_URL}/rest/v1/attendance",
+        json=payload,
+        headers=headers
+    )
+
+# ---------------- LOCAL DATABASE ----------------
+
 def db():
     return sqlite3.connect("database.db")
-
 
 def create_tables():
 
@@ -37,6 +64,7 @@ def create_tables():
 
 create_tables()
 
+# ---------------- IMAGE SAVE ----------------
 
 def save_image(data,name):
 
@@ -45,18 +73,17 @@ def save_image(data,name):
 
     img=data.split(",")[1]
 
+    os.makedirs("static",exist_ok=True)
+
     with open("static/"+name,"wb") as f:
 
         f.write(base64.b64decode(img))
 
-
+# ---------------- ROUTES ----------------
 
 @app.route("/")
 def login():
-
     return render_template("login.html")
-
-
 
 @app.route("/dashboard")
 def dashboard():
@@ -65,12 +92,9 @@ def dashboard():
     cur=con.cursor()
 
     cur.execute("select * from employees")
-
     data=cur.fetchall()
 
     return render_template("dashboard.html", employees=data)
-
-
 
 @app.route("/add_employee",methods=["GET","POST"])
 def add_employee():
@@ -95,8 +119,6 @@ def add_employee():
         return redirect("/dashboard")
 
     return render_template("add_employee.html")
-
-
 
 @app.route("/attendance/<emp_id>", methods=["GET","POST"])
 def attendance(emp_id):
@@ -124,8 +146,8 @@ def attendance(emp_id):
 
         row = cur.fetchone()
 
+        # ---------- IN TIME ----------
 
-        # prevent double IN
         if type=="IN":
 
             if row:
@@ -138,8 +160,11 @@ def attendance(emp_id):
 
             save_image(img,f"{emp_id}_in.jpg")
 
+            # send to online database
+            send_to_supabase(emp_id,date,time,"")
 
-        # prevent double OUT
+        # ---------- OUT TIME ----------
+
         else:
 
             if not row:
@@ -159,14 +184,13 @@ def attendance(emp_id):
 
             save_image(img,f"{emp_id}_out.jpg")
 
+            send_to_supabase(emp_id,date,row[2],time)
 
         con.commit()
 
         return redirect(f"/attendance/{emp_id}")
 
-
-
-    # show latest time on screen
+    # ---------- SHOW TIMES ----------
 
     con = db()
     cur = con.cursor()
@@ -188,10 +212,8 @@ def attendance(emp_id):
     out_time=""
 
     if row:
-
         in_time=row[0]
         out_time=row[1]
-
 
     return render_template(
     "attendance.html",
@@ -200,7 +222,7 @@ def attendance(emp_id):
     out_time=out_time
     )
 
-
+# ---------------- REPORT ----------------
 
 @app.route("/report",methods=["GET","POST"])
 def report():
@@ -227,7 +249,7 @@ def report():
 
     return render_template("report.html",data=data)
 
-
+# ---------------- EXCEL ----------------
 
 @app.route("/excel")
 def excel():
@@ -236,7 +258,6 @@ def excel():
     cur=con.cursor()
 
     cur.execute("select * from attendance")
-
     rows=cur.fetchall()
 
     wb=Workbook()
@@ -247,7 +268,6 @@ def excel():
     green=PatternFill(start_color="00FF00",fill_type="solid")
     yellow=PatternFill(start_color="FFFF00",fill_type="solid")
     red=PatternFill(start_color="FF0000",fill_type="solid")
-
 
     for r in rows:
 
@@ -274,17 +294,14 @@ def excel():
                 status="A"
                 color=red
 
-
         ws.append([r[0],r[1],status])
-
         ws.cell(ws.max_row,3).fill=color
-
 
     wb.save("report.xlsx")
 
     return send_file("report.xlsx",as_attachment=True)
 
-
+# ---------------- EMPLOYEE ----------------
 
 @app.route("/delete_employee/<id>")
 def delete_employee(id):
@@ -293,12 +310,9 @@ def delete_employee(id):
     cur=con.cursor()
 
     cur.execute("delete from employees where id=?",(id,))
-
     con.commit()
 
     return redirect("/dashboard")
-
-
 
 @app.route("/edit_employee/<id>",methods=["GET","POST"])
 def edit_employee(id):
@@ -326,14 +340,12 @@ def edit_employee(id):
 
         return redirect("/dashboard")
 
-
     cur.execute("select * from employees where id=?",(id,))
-
     emp=cur.fetchone()
 
     return render_template("edit_employee.html",emp=emp)
 
-
+# ---------------- RUN ----------------
 
 if __name__=="__main__":
 
