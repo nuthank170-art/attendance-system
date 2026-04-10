@@ -24,7 +24,8 @@ def send_to_supabase(emp_id,date,in_time,out_time):
         "employee_id": emp_id,
         "name": emp_id,
         "date": date + " " + in_time,
-        "image_url": emp_id
+        "image_url": f"{emp_id}_{in_time}.jpg"
+}
     }
 
     requests.post(
@@ -158,7 +159,8 @@ def attendance(emp_id):
             (emp_id,date,time,"",gps)
             )
 
-            save_image(img,f"{emp_id}_in.jpg")
+            filename = f"{emp_id}_{time}.jpg"
+            save_image(img, filename)
 
             # send to online database
             send_to_supabase(emp_id,date,time,"")
