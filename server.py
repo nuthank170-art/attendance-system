@@ -31,24 +31,24 @@ def upload_image_to_supabase(image_data, filename):
 
 def send_to_supabase(emp_id,name,date,time,image_url):
 
+    url = "https://odbkrbarwhhzfemqfbts.supabase.co/rest/v1/attendance"
+
     headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "apikey": "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh",
+        "Authorization": "Bearer sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh",
         "Content-Type": "application/json"
     }
 
-    payload = {
-        "employee_id": emp_id,
-        "name": name,
-        "date": date + " " + time,
-        "image_url": image_url
+    data = {
+        "employee_id": str(emp_id),
+        "name": str(name),
+        "date": str(date) + " " + str(time),
+        "image_url": str(image_url)
     }
 
-    requests.post(
-        f"{SUPABASE_URL}/rest/v1/attendance",
-        json=payload,
-        headers=headers
-    )
+    r = requests.post(url, json=data, headers=headers)
+
+    print("SUPABASE:", r.status_code, r.text)
 
 # ---------------- LOCAL DATABASE ----------------
 
