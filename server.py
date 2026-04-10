@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, send_file, jsonify
+from flask import Flask, render_template, request, redirect, send_file
 import sqlite3, os, base64, requests
 import pytz
 from datetime import datetime
@@ -7,12 +7,29 @@ from openpyxl.styles import PatternFill
 
 app = Flask(__name__)
 
-# ---------------- SUPABASE CONFIG ----------------
+# ---------------- SUPABASE ----------------
 
-SUPABASE_URL = "https://odbkrbarwhhzfemqfbts.supabase.co"
-SUPABASE_KEY = "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh"
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-def send_to_supabase(emp_id,date,in_time,out_time):
+def upload_image_to_supabase(image_data, filename):
+
+    img_data = base64.b64decode(image_data.split(",")[1])
+
+    url = f"{SUPABASE_URL}/storage/v1/object/attendance-images/{filename}"
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "image/jpeg"
+    }
+
+    requests.post(url, headers=headers, data=img_data)
+
+    return f"{SUPABASE_URL}/storage/v1/object/public/attendance-images/{filename}"
+
+
+def send_to_supabase(emp_id,name,date,time,image_url):
 
     headers = {
         "apikey": SUPABASE_KEY,
@@ -22,10 +39,9 @@ def send_to_supabase(emp_id,date,in_time,out_time):
 
     payload = {
         "employee_id": emp_id,
-        "name": emp_id,
-        "date": date + " " + in_time,
-        "image_url": f"{emp_id}_{in_time}.jpg"
-}
+        "name": name,
+        "date": date + " " + time,
+        "image_url": image_url
     }
 
     requests.post(
@@ -64,21 +80,6 @@ def create_tables():
     con.commit()
 
 create_tables()
-
-# ---------------- IMAGE SAVE ----------------
-
-def save_image(data,name):
-
-    if data=="":
-        return
-
-    img=data.split(",")[1]
-
-    os.makedirs("static",exist_ok=True)
-
-    with open("static/"+name,"wb") as f:
-
-        f.write(base64.b64decode(img))
 
 # ---------------- ROUTES ----------------
 
@@ -126,6 +127,14 @@ def attendance(emp_id):
 
     india = pytz.timezone("Asia/Kolkata")
 
+    con = db()
+    cur = con.cursor()
+
+    cur.execute("select name from employees where id=?", (emp_id,))
+    emp = cur.fetchone()
+
+    emp_name = emp[0] if emp else emp_id
+
     if request.method == "POST":
 
         type = request.form["type"]
@@ -137,15 +146,16 @@ def attendance(emp_id):
         date = now.strftime("%Y-%m-%d")
         time = now.strftime("%H:%M:%S")
 
-        con = db()
-        cur = con.cursor()
-
         cur.execute(
         "SELECT * FROM attendance WHERE emp_id=? AND date=?",
         (emp_id,date)
         )
 
         row = cur.fetchone()
+
+        filename = f"{emp_id}_{date}_{time}.jpg"
+
+        image_url = upload_image_to_supabase(img, filename)
 
         # ---------- IN TIME ----------
 
@@ -159,11 +169,7 @@ def attendance(emp_id):
             (emp_id,date,time,"",gps)
             )
 
-            filename = f"{emp_id}_{time}.jpg"
-            save_image(img, filename)
-
-            # send to online database
-            send_to_supabase(emp_id,date,time,"")
+            send_to_supabase(emp_id,emp_name,date,time,image_url)
 
         # ---------- OUT TIME ----------
 
@@ -184,18 +190,13 @@ def attendance(emp_id):
             (time,gps,emp_id,date)
             )
 
-            save_image(img,f"{emp_id}_out.jpg")
-
-            send_to_supabase(emp_id,date,row[2],time)
+            send_to_supabase(emp_id,emp_name,date,time,image_url)
 
         con.commit()
 
         return redirect(f"/attendance/{emp_id}")
 
-    # ---------- SHOW TIMES ----------
-
-    con = db()
-    cur = con.cursor()
+    # show latest time
 
     cur.execute(
     """
@@ -260,6 +261,7 @@ def excel():
     cur=con.cursor()
 
     cur.execute("select * from attendance")
+
     rows=cur.fetchall()
 
     wb=Workbook()
@@ -302,50 +304,6 @@ def excel():
     wb.save("report.xlsx")
 
     return send_file("report.xlsx",as_attachment=True)
-
-# ---------------- EMPLOYEE ----------------
-
-@app.route("/delete_employee/<id>")
-def delete_employee(id):
-
-    con=db()
-    cur=con.cursor()
-
-    cur.execute("delete from employees where id=?",(id,))
-    con.commit()
-
-    return redirect("/dashboard")
-
-@app.route("/edit_employee/<id>",methods=["GET","POST"])
-def edit_employee(id):
-
-    con=db()
-    cur=con.cursor()
-
-    if request.method=="POST":
-
-        cur.execute(
-        """
-        update employees
-        set name=?,designation=?,location=?
-        where id=?
-        """,
-        (
-        request.form["name"],
-        request.form["designation"],
-        request.form["location"],
-        id
-        )
-        )
-
-        con.commit()
-
-        return redirect("/dashboard")
-
-    cur.execute("select * from employees where id=?",(id,))
-    emp=cur.fetchone()
-
-    return render_template("edit_employee.html",emp=emp)
 
 # ---------------- RUN ----------------
 
