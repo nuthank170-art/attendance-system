@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html>
 
 <head>
@@ -35,7 +34,6 @@ max-width:320px;
 height:auto;
 border-radius:12px;
 border:2px solid #ccc;
-object-fit:cover;
 background:black;
 }
 
@@ -60,8 +58,8 @@ color:white;
 }
 
 img{
-width:140px;
-margin-top:5px;
+width:150px;
+margin-top:8px;
 border-radius:8px;
 border:1px solid #bbb;
 }
@@ -108,20 +106,12 @@ Punch OUT
 
 </form>
 
-<h3>IN</h3>
+<h3>Preview</h3>
 
-<img src="/static/{{emp_id}}_in.jpg">
+<img id="preview">
 
 <div class="time">
 {{in_time}}
-</div>
-
-<h3>OUT</h3>
-
-<img src="/static/{{emp_id}}_out.jpg">
-
-<div class="time">
-{{out_time}}
 </div>
 
 </div>
@@ -156,7 +146,6 @@ alert("Please allow camera permission")
 
 startCamera()
 
-
 function capture(type){
 
 document.getElementById("type").value = type
@@ -165,18 +154,20 @@ let video = document.getElementById("cam")
 
 let canvas = document.createElement("canvas")
 
-canvas.width = 320
-canvas.height = 320
+canvas.width = video.videoWidth
+canvas.height = video.videoHeight
 
 let ctx = canvas.getContext("2d")
 
-ctx.drawImage(video,0,0,320,320)
+ctx.drawImage(video,0,0)
 
-document.getElementById("image").value =
-canvas.toDataURL("image/jpeg",0.95)
+let imageData = canvas.toDataURL("image/jpeg",0.9)
+
+document.getElementById("image").value = imageData
+
+document.getElementById("preview").src = imageData
 
 }
-
 
 /* GPS capture */
 
@@ -188,12 +179,6 @@ function(pos){
 
 document.getElementById("location").value =
 pos.coords.latitude + "," + pos.coords.longitude
-
-},
-
-function(){
-
-document.getElementById("location").value="GPS not allowed"
 
 }
 
