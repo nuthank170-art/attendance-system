@@ -9,14 +9,15 @@ app = Flask(__name__)
 
 # ---------------- SUPABASE ----------------
 
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = "https://odbkrbarwhhzfemqfbts.supabase.co"
+SUPABASE_KEY = "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh"
 
+# upload image to supabase storage
 def upload_image_to_supabase(image_data, filename):
 
     img_data = base64.b64decode(image_data.split(",")[1])
 
-    url = f"{SUPABASE_URL}/storage/v1/object/attendance-images/{filename}"
+    url = f"{SUPABASE_URL}/storage/v1/object/public/attendance-images/{filename}"
 
     headers = {
         "apikey": SUPABASE_KEY,
@@ -24,31 +25,34 @@ def upload_image_to_supabase(image_data, filename):
         "Content-Type": "image/jpeg"
     }
 
-    requests.post(url, headers=headers, data=img_data)
+    r = requests.post(url, headers=headers, data=img_data)
 
-    return f"{SUPABASE_URL}/storage/v1/object/public/attendance-images/{filename}"
+    print("IMAGE UPLOAD:", r.status_code, r.text)
 
+    return url
 
+# save row in supabase table
 def send_to_supabase(emp_id,name,date,time,image_url):
 
-    url = "https://odbkrbarwhhzfemqfbts.supabase.co/rest/v1/attendance"
+    url = f"{SUPABASE_URL}/rest/v1/attendance"
 
     headers = {
-        "apikey": "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh",
-        "Authorization": "Bearer sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh",
-        "Content-Type": "application/json"
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
     }
 
     data = {
-        "employee_id": str(emp_id),
-        "name": str(name),
-        "date": str(date) + " " + str(time),
-        "image_url": str(image_url)
+        "employee_id": emp_id,
+        "name": name,
+        "date": f"{date} {time}",
+        "image_url": image_url
     }
 
     r = requests.post(url, json=data, headers=headers)
 
-    print("SUPABASE:", r.status_code, r.text)
+    print("DB INSERT:", r.status_code, r.text)
 
 # ---------------- LOCAL DATABASE ----------------
 
@@ -157,7 +161,7 @@ def attendance(emp_id):
 
         image_url = upload_image_to_supabase(img, filename)
 
-        # ---------- IN TIME ----------
+        # ---------- IN ----------
 
         if type=="IN":
 
@@ -171,7 +175,7 @@ def attendance(emp_id):
 
             send_to_supabase(emp_id,emp_name,date,time,image_url)
 
-        # ---------- OUT TIME ----------
+        # ---------- OUT ----------
 
         else:
 
@@ -195,8 +199,6 @@ def attendance(emp_id):
         con.commit()
 
         return redirect(f"/attendance/{emp_id}")
-
-    # show latest time
 
     cur.execute(
     """
@@ -224,86 +226,6 @@ def attendance(emp_id):
     in_time=in_time,
     out_time=out_time
     )
-
-# ---------------- REPORT ----------------
-
-@app.route("/report",methods=["GET","POST"])
-def report():
-
-    data=[]
-
-    if request.method=="POST":
-
-        f=request.form["from"]
-        t=request.form["to"]
-
-        con=db()
-        cur=con.cursor()
-
-        cur.execute(
-        """
-        select * from attendance
-        where date between ? and ?
-        """,
-        (f,t)
-        )
-
-        data=cur.fetchall()
-
-    return render_template("report.html",data=data)
-
-# ---------------- EXCEL ----------------
-
-@app.route("/excel")
-def excel():
-
-    con=db()
-    cur=con.cursor()
-
-    cur.execute("select * from attendance")
-
-    rows=cur.fetchall()
-
-    wb=Workbook()
-    ws=wb.active
-
-    ws.append(["Emp","Date","Status"])
-
-    green=PatternFill(start_color="00FF00",fill_type="solid")
-    yellow=PatternFill(start_color="FFFF00",fill_type="solid")
-    red=PatternFill(start_color="FF0000",fill_type="solid")
-
-    for r in rows:
-
-        if r[3]=="":
-            status="A"
-            color=red
-
-        else:
-
-            t1=datetime.strptime(r[2],"%H:%M:%S")
-            t2=datetime.strptime(r[3],"%H:%M:%S")
-
-            hrs=(t2-t1).seconds/3600
-
-            if hrs>=8:
-                status="P"
-                color=green
-
-            elif hrs>=4:
-                status="PH"
-                color=yellow
-
-            else:
-                status="A"
-                color=red
-
-        ws.append([r[0],r[1],status])
-        ws.cell(ws.max_row,3).fill=color
-
-    wb.save("report.xlsx")
-
-    return send_file("report.xlsx",as_attachment=True)
 
 # ---------------- RUN ----------------
 
