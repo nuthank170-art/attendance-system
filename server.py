@@ -35,14 +35,13 @@ def upload_image_to_supabase(image_data, filename):
 # save attendance row
 def save_attendance(emp_id,name,date,time,image_url,punch_type):
 
-    url = f"{SUPABASE_URL}/rest/v1/attendance"
-
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
         "Content-Type": "application/json"
     }
 
+    # SAVE IN
     if punch_type=="IN":
 
         data = {
@@ -53,21 +52,36 @@ def save_attendance(emp_id,name,date,time,image_url,punch_type):
             "in_image": image_url
         }
 
-        r = requests.post(url, json=data, headers=headers)
+        r = requests.post(
 
+            f"{SUPABASE_URL}/rest/v1/attendance",
+
+            json=data,
+
+            headers=headers
+
+        )
+
+        print("IN SAVED:", r.status_code, r.text)
+
+
+    # SAVE OUT
     else:
 
-        update_url = f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&date=eq.{date}"
+        r = requests.patch(
 
-        data = {
-            "out_time": time,
-            "out_image": image_url
-        }
+            f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&date=eq.{date}",
 
-        r = requests.patch(update_url, json=data, headers=headers)
+            json={
+                "out_time": time,
+                "out_image": image_url
+            },
 
-    print("DB STATUS:", r.status_code, r.text)
+            headers=headers
 
+        )
+
+        print("OUT SAVED:", r.status_code, r.text)
 
 # get employees
 def get_employees():
@@ -201,12 +215,55 @@ def attendance(emp_id):
 
         image_url = upload_image_to_supabase(img, filename)
 
-        save_attendance(emp_id,emp_name,date,time,image_url,punch_type)
+        save_attendance(
+
+            emp_id,
+            emp_name,
+            date,
+            time,
+            image_url,
+            punch_type
+
+        )
 
         return redirect(f"/attendance/{emp_id}")
 
 
-    in_img,out_img,in_time,out_time = get_last_images(emp_id)
+    # GET TODAY DATA
+
+    headers = {
+
+        "apikey": SUPABASE_KEY,
+
+        "Authorization": f"Bearer {SUPABASE_KEY}"
+
+    }
+
+    today = datetime.now(india).strftime("%Y-%m-%d")
+
+    r = requests.get(
+
+        f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&date=eq.{today}",
+
+        headers=headers
+
+    )
+
+    data = r.json()
+
+    in_img=""
+    out_img=""
+    in_time=""
+    out_time=""
+
+    if len(data)>0:
+
+        in_img = data[0].get("in_image","")
+        out_img = data[0].get("out_image","")
+
+        in_time = data[0].get("in_time","")
+        out_time = data[0].get("out_time","")
+
 
     return render_template(
 
@@ -214,14 +271,13 @@ def attendance(emp_id):
 
         emp_id=emp_id,
 
-        in_time=in_time,
-        out_time=out_time,
-
         in_image=in_img,
-        out_image=out_img
+        out_image=out_img,
+
+        in_time=in_time,
+        out_time=out_time
 
     )
-
 
 # monthly photo report
 @app.route("/monthly_report")
