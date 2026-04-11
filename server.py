@@ -15,7 +15,7 @@ def upload_image_to_supabase(image_data, filename):
 
     img_data = base64.b64decode(image_data.split(",")[1])
 
-    url = f"{SUPABASE_URL}/storage/v1/object/public/attendance-images/{filename}"
+    upload_url = f"{SUPABASE_URL}/storage/v1/object/attendance-images/{filename}"
 
     headers = {
         "apikey": SUPABASE_KEY,
@@ -23,11 +23,15 @@ def upload_image_to_supabase(image_data, filename):
         "Content-Type": "image/jpeg"
     }
 
-    r = requests.post(url, headers=headers, data=img_data)
+    r = requests.post(upload_url, headers=headers, data=img_data)
 
-    print("IMAGE:", r.status_code)
+    print("IMAGE STATUS:", r.status_code, r.text)
 
-    return url
+    # public url
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/attendance-images/{filename}"
+
+    return public_url
+
 
 # save attendance row
 def save_attendance(emp_id,name,date,time,image_url):
@@ -47,9 +51,12 @@ def save_attendance(emp_id,name,date,time,image_url):
         "image_url": image_url
     }
 
-    requests.post(url, json=data, headers=headers)
+    r = requests.post(url, json=data, headers=headers)
 
-# get employees from supabase
+    print("DB STATUS:", r.status_code, r.text)
+
+
+# get employees
 def get_employees():
 
     url = f"{SUPABASE_URL}/rest/v1/employees?select=*"
@@ -62,6 +69,7 @@ def get_employees():
     r = requests.get(url, headers=headers)
 
     return r.json()
+
 
 # save employee permanently
 def save_employee(emp_id,name,designation,location):
@@ -81,7 +89,31 @@ def save_employee(emp_id,name,designation,location):
         "location": location
     }
 
-    requests.post(url, json=data, headers=headers)
+    r = requests.post(url, json=data, headers=headers)
+
+    print("EMP STATUS:", r.status_code, r.text)
+
+
+# get last image for display
+def get_last_image(emp_id):
+
+    url = f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&order=date.desc&limit=1"
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}"
+    }
+
+    r = requests.get(url, headers=headers)
+
+    data = r.json()
+
+    if len(data) > 0:
+
+        return data[0]["image_url"], data[0]["date"]
+
+    return "", ""
+
 
 # ---------------- ROUTES ----------------
 
@@ -89,12 +121,14 @@ def save_employee(emp_id,name,designation,location):
 def login():
     return render_template("login.html")
 
+
 @app.route("/dashboard")
 def dashboard():
 
     employees = get_employees()
 
     return render_template("dashboard.html", employees=employees)
+
 
 @app.route("/add_employee", methods=["GET","POST"])
 def add_employee():
@@ -114,6 +148,7 @@ def add_employee():
 
     return render_template("add_employee.html")
 
+
 @app.route("/attendance/<emp_id>", methods=["GET","POST"])
 def attendance(emp_id):
 
@@ -124,17 +159,20 @@ def attendance(emp_id):
     emp_name = emp_id
 
     for e in employees:
+
         if e["id"] == emp_id:
+
             emp_name = e["name"]
+
 
     if request.method=="POST":
 
-        type = request.form["type"]
         img = request.form["image"]
 
         now = datetime.now(india)
 
         date = now.strftime("%Y-%m-%d")
+
         time = now.strftime("%H:%M:%S")
 
         filename = f"{emp_id}_{date}_{time}.jpg"
@@ -145,14 +183,25 @@ def attendance(emp_id):
 
         return redirect(f"/attendance/{emp_id}")
 
+
+    last_image, last_time = get_last_image(emp_id)
+
     return render_template(
-    "attendance.html",
-     emp_id=emp_id,
-     in_time="",
-     out_time="",
-     in_image="",
-     out_image=""
-     )
+
+        "attendance.html",
+
+        emp_id=emp_id,
+
+        in_time=last_time,
+
+        in_image=last_image,
+
+        out_time="",
+
+        out_image=""
+
+    )
+
 
 # ---------------- RUN ----------------
 
