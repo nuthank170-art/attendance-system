@@ -10,16 +10,12 @@ app = Flask(__name__)
 SUPABASE_URL = "https://odbkrbarwhhzfemqfbts.supabase.co"
 SUPABASE_KEY = "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh"
 
-BUCKET = "attendance-images"
-
-
-# ---------------- IMAGE UPLOAD ----------------
-
+# upload image to supabase storage
 def upload_image_to_supabase(image_data, filename):
 
     img_data = base64.b64decode(image_data.split(",")[1])
 
-    upload_url = f"{SUPABASE_URL}/storage/v1/object/{BUCKET}/{filename}"
+    upload_url = f"{SUPABASE_URL}/storage/v1/object/attendance-images/{filename}"
 
     headers = {
         "apikey": SUPABASE_KEY,
@@ -29,15 +25,51 @@ def upload_image_to_supabase(image_data, filename):
 
     r = requests.post(upload_url, headers=headers, data=img_data)
 
-    print("IMAGE:", r.status_code, r.text)
+    print("IMAGE STATUS:", r.status_code, r.text)
 
-    public_url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET}/{filename}"
+    public_url = f"{SUPABASE_URL}/storage/v1/object/public/attendance-images/{filename}"
 
     return public_url
 
 
-# ---------------- EMPLOYEE ----------------
+# save attendance row
+def save_attendance(emp_id,name,date,time,image_url,punch_type):
 
+    url = f"{SUPABASE_URL}/rest/v1/attendance"
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    if punch_type=="IN":
+
+        data = {
+            "employee_id": emp_id,
+            "name": name,
+            "date": date,
+            "in_time": time,
+            "in_image": image_url
+        }
+
+        r = requests.post(url, json=data, headers=headers)
+
+    else:
+
+        update_url = f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&date=eq.{date}"
+
+        data = {
+            "out_time": time,
+            "out_image": image_url
+        }
+
+        r = requests.patch(update_url, json=data, headers=headers)
+
+    print("DB STATUS:", r.status_code, r.text)
+
+
+# get employees
 def get_employees():
 
     url = f"{SUPABASE_URL}/rest/v1/employees?select=*"
@@ -52,6 +84,7 @@ def get_employees():
     return r.json()
 
 
+# save employee permanently
 def save_employee(emp_id,name,designation,location):
 
     url = f"{SUPABASE_URL}/rest/v1/employees"
@@ -71,71 +104,11 @@ def save_employee(emp_id,name,designation,location):
 
     r = requests.post(url, json=data, headers=headers)
 
-    print("EMP:", r.status_code, r.text)
+    print("EMP STATUS:", r.status_code, r.text)
 
 
-# ---------------- ATTENDANCE ----------------
-
-def get_today_record(emp_id,date):
-
-    url = f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&date=eq.{date}"
-
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}"
-    }
-
-    r = requests.get(url, headers=headers)
-
-    data = r.json()
-
-    if len(data)>0:
-
-        return data[0]
-
-    return None
-
-
-def save_in(emp_id,name,date,time,image_url):
-
-    url = f"{SUPABASE_URL}/rest/v1/attendance"
-
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    data = {
-        "employee_id": emp_id,
-        "name": name,
-        "date": date,
-        "in_time": time,
-        "in_image": image_url
-    }
-
-    requests.post(url,json=data,headers=headers)
-
-
-def save_out(emp_id,date,time,image_url):
-
-    url = f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&date=eq.{date}"
-
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json"
-    }
-
-    data = {
-        "out_time": time,
-        "out_image": image_url
-    }
-
-    requests.patch(url,json=data,headers=headers)
-
-
-def get_last_photo(emp_id):
+# get last images
+def get_last_images(emp_id):
 
     url = f"{SUPABASE_URL}/rest/v1/attendance?employee_id=eq.{emp_id}&order=date.desc&limit=1"
 
@@ -148,18 +121,24 @@ def get_last_photo(emp_id):
 
     data = r.json()
 
-    if len(data)>0:
+    if len(data) > 0:
 
-        return data[0].get("in_image","")
+        return (
 
-    return ""
+            data[0].get("in_image",""),
+            data[0].get("out_image",""),
+            data[0].get("in_time",""),
+            data[0].get("out_time","")
+
+        )
+
+    return "","","",""
 
 
 # ---------------- ROUTES ----------------
 
 @app.route("/")
 def login():
-
     return render_template("login.html")
 
 
@@ -167,10 +146,6 @@ def login():
 def dashboard():
 
     employees = get_employees()
-
-    for emp in employees:
-
-        emp["photo"] = get_last_photo(emp["id"])
 
     return render_template("dashboard.html", employees=employees)
 
@@ -209,13 +184,10 @@ def attendance(emp_id):
 
             emp_name = e["name"]
 
-    today = datetime.now(india).strftime("%Y-%m-%d")
-
-    record = get_today_record(emp_id,today)
 
     if request.method=="POST":
 
-        type = request.form["type"]
+        punch_type = request.form["type"]
 
         img = request.form["image"]
 
@@ -225,31 +197,16 @@ def attendance(emp_id):
 
         time = now.strftime("%H:%M:%S")
 
-        filename = f"{emp_id}_{type}_{date}_{time}.jpg"
+        filename = f"{emp_id}_{punch_type}_{date}_{time}.jpg"
 
         image_url = upload_image_to_supabase(img, filename)
 
-        if type=="IN":
-
-            save_in(emp_id,emp_name,date,time,image_url)
-
-        else:
-
-            save_out(emp_id,date,time,image_url)
+        save_attendance(emp_id,emp_name,date,time,image_url,punch_type)
 
         return redirect(f"/attendance/{emp_id}")
 
-    in_img=""
-    out_img=""
-    in_time=""
-    out_time=""
 
-    if record:
-
-        in_img=record.get("in_image","")
-        out_img=record.get("out_image","")
-        in_time=record.get("in_time","")
-        out_time=record.get("out_time","")
+    in_img,out_img,in_time,out_time = get_last_images(emp_id)
 
     return render_template(
 
@@ -257,15 +214,16 @@ def attendance(emp_id):
 
         emp_id=emp_id,
 
-        in_image=in_img,
-        out_image=out_img,
-
         in_time=in_time,
-        out_time=out_time
+        out_time=out_time,
+
+        in_image=in_img,
+        out_image=out_img
 
     )
 
 
+# monthly photo report
 @app.route("/monthly_report")
 
 def monthly_report():
