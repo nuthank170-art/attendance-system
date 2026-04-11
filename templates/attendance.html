@@ -110,19 +110,36 @@ Punch OUT
 
 <img id="preview">
 
+<!-- IN IMAGE -->
+
 {% if in_image %}
 
-<h3>IN Time : {{in_time}}</h3>
+<h3>IN</h3>
 
 <img src="{{in_image}}">
 
+<div class="time">
+
+{{in_time}}
+
+</div>
+
 {% endif %}
+
+
+<!-- OUT IMAGE -->
 
 {% if out_image %}
 
-<h3>OUT Time : {{out_time}}</h3>
+<h3>OUT</h3>
 
 <img src="{{out_image}}">
+
+<div class="time">
+
+{{out_time}}
+
+</div>
 
 {% endif %}
 
@@ -175,6 +192,7 @@ document.getElementById("image").value = img
 document.getElementById("preview").src = img
 
 }
+
 
 /* GPS */
 
