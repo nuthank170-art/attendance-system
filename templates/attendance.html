@@ -59,7 +59,7 @@ color:white;
 
 img{
 width:150px;
-margin-top:8px;
+margin-top:10px;
 border-radius:8px;
 border:1px solid #bbb;
 }
@@ -67,7 +67,7 @@ border:1px solid #bbb;
 .time{
 font-size:18px;
 font-weight:bold;
-margin-bottom:15px;
+margin-top:5px;
 color:#333;
 }
 
@@ -110,9 +110,21 @@ Punch OUT
 
 <img id="preview">
 
-<div class="time">
-{{in_time}}
-</div>
+{% if in_image %}
+
+<h3>IN Time : {{in_time}}</h3>
+
+<img src="{{in_image}}">
+
+{% endif %}
+
+{% if out_image %}
+
+<h3>OUT Time : {{out_time}}</h3>
+
+<img src="{{out_image}}">
+
+{% endif %}
 
 </div>
 
@@ -124,12 +136,7 @@ try{
 
 const stream = await navigator.mediaDevices.getUserMedia({
 
-video:{
-width:{ideal:720},
-height:{ideal:720},
-facingMode:"user"
-},
-
+video:true,
 audio:false
 
 })
@@ -138,7 +145,7 @@ document.getElementById("cam").srcObject = stream
 
 }catch(e){
 
-alert("Please allow camera permission")
+alert("Allow camera permission")
 
 }
 
@@ -161,15 +168,15 @@ let ctx = canvas.getContext("2d")
 
 ctx.drawImage(video,0,0)
 
-let imageData = canvas.toDataURL("image/jpeg",0.9)
+let img = canvas.toDataURL("image/jpeg",0.9)
 
-document.getElementById("image").value = imageData
+document.getElementById("image").value = img
 
-document.getElementById("preview").src = imageData
+document.getElementById("preview").src = img
 
 }
 
-/* GPS capture */
+/* GPS */
 
 if(navigator.geolocation){
 
