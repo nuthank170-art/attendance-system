@@ -20,12 +20,13 @@ def upload_image_to_supabase(image_data, filename):
     headers = {
         "apikey": SUPABASE_KEY,
         "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "image/jpeg"
+        "Content-Type": "application/octet-stream"
     }
 
     r = requests.post(upload_url, headers=headers, data=img_data)
 
-    print("IMAGE STATUS:", r.status_code, r.text)
+    print("IMAGE STATUS:", r.status_code)
+    print(r.text)
 
     public_url = f"{SUPABASE_URL}/storage/v1/object/public/attendance-images/{filename}"
 
