@@ -1,0 +1,23 @@
+<h2>Monthly Attendance Photo Report</h2>
+
+{% for r in data %}
+
+<p>
+
+{{r.employee_id}} | {{r.date}}
+
+</p>
+
+IN<br>
+
+<img src="{{r.in_image}}" width="120">
+
+<br><br>
+
+OUT<br>
+
+<img src="{{r.out_image}}" width="120">
+
+<hr>
+
+{% endfor %}
