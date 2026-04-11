@@ -145,7 +145,14 @@ def attendance(emp_id):
 
         return redirect(f"/attendance/{emp_id}")
 
-    return render_template("attendance.html", emp_id=emp_id)
+    return render_template(
+    "attendance.html",
+     emp_id=emp_id,
+     in_time="",
+     out_time="",
+     in_image="",
+     out_image=""
+     )
 
 # ---------------- RUN ----------------
 
