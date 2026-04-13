@@ -1,5 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Login</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+body{
+font-family:Arial;
+background:#eef2f7;
+margin:0;
+padding:0;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+}
+
+.box{
+background:white;
+width:90%;
+max-width:350px;
+padding:25px;
+border-radius:12px;
+box-shadow:0 0 12px rgba(0,0,0,0.15);
+text-align:center;
+}
+
+h2{
+margin-bottom:20px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border:1px solid #ccc;
+border-radius:6px;
+font-size:16px;
+}
+
+button{
+width:100%;
+padding:12px;
+margin-top:15px;
+background:#007bff;
+color:white;
+border:none;
+border-radius:6px;
+font-size:17px;
+cursor:pointer;
+}
+
+button:hover{
+background:#0056b3;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
 <h2>Login</h2>
 
-<a href="/dashboard">
-Login
-</a>
+<form action="/dashboard">
+
+<input placeholder="Enter ID">
+
+<button>Enter</button>
+
+</form>
+
+</div>
+
+</body>
+
+</html>
