@@ -1,47 +1,92 @@
 <!DOCTYPE html>
 
 <html>
+
 <head>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
 <style>
-body{font-family:Arial;background:#f4f6f9}
+
+body{font-family:Arial;background:#f4f6f9;margin:0}
+
 .top{background:#2c6fb7;color:white;padding:10px}
-.card{background:white;padding:15px;margin:10px;border-radius:6px}
+
+.card{background:white;padding:15px;margin:10px;border-radius:6px;overflow-x:auto}
+
 table{width:100%;border-collapse:collapse}
+
 th,td{padding:10px;border:1px solid #ccc;text-align:center}
+
 .btn{padding:6px 10px;background:#5cb85c;color:white;border:none}
+
+a{color:white;text-decoration:none;margin-right:10px}
+
 </style>
+
 </head>
+
 
 <body>
 
 <div class="top">
+
 <h2>Admin Dashboard</h2>
+
 <a href="/add_employee">Add Employee</a> |
+
 <a href="/report">Report</a>
+
 </div>
 
+
 <div class="card">
+
 <table>
+
 <tr>
-<th>ID</th><th>Name</th><th>Designation</th><th>Action</th>
+
+<th>ID</th>
+
+<th>Name</th>
+
+<th>Designation</th>
+
+<th>Action</th>
+
 </tr>
+
 
 {% for e in employees %}
 
 <tr>
-<td>{{e[0]}}</td>
-<td>{{e[1]}}</td>
-<td>{{e[2]}}</td>
+
+<td>{{e.id}}</td>
+
+<td>{{e.name}}</td>
+
+<td>{{e.designation}}</td>
+
 <td>
-<a href="/attendance/{{e[0]}}">
+
+<a href="/attendance/{{e.id}}">
+
 <button class="btn">Mark</button>
+
 </a>
+
 </td>
+
 </tr>
+
 {% endfor %}
 
+
 </table>
+
 </div>
 
+
 </body>
+
 </html>
