@@ -19,7 +19,7 @@ def send_whatsapp_group(name,punch_type,date,time):
 
     token = "1s7j5er6qdeigt2m"
 
-    group_id = "PASTE_GROUP_ID_HERE"
+    group_id = "120363424682689340@g.us"
 
     message = f"{name}\n{punch_type}\n{date}\n{time}"
 
