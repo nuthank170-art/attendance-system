@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect
 import os, base64, requests
 import pytz
 from datetime import datetime
+import pywhatkit as kit
 
 app = Flask(__name__)
 
@@ -9,6 +10,26 @@ app = Flask(__name__)
 
 SUPABASE_URL = "https://odbkrbarwhhzfemqfbts.supabase.co"
 SUPABASE_KEY = "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh"
+
+
+# ---------------- WHATSAPP ----------------
+
+def send_whatsapp_group(name,punch_type,date,time):
+
+    message = f"{name}\n{punch_type}\n{date}\n{time}"
+
+    kit.sendwhatmsg_to_group_instantly(
+
+        "Carelon",
+
+        message,
+
+        wait_time=10,
+
+        tab_close=True
+
+    )
+
 
 # upload image to supabase storage
 def upload_image_to_supabase(image_data, filename):
@@ -42,7 +63,6 @@ def save_attendance(emp_id,name,date,time,image_url,punch_type):
         "Content-Type": "application/json"
     }
 
-    # SAVE IN
     if punch_type=="IN":
 
         data = {
@@ -65,8 +85,6 @@ def save_attendance(emp_id,name,date,time,image_url,punch_type):
 
         print("IN SAVED:", r.status_code, r.text)
 
-
-    # SAVE OUT
     else:
 
         r = requests.patch(
@@ -83,6 +101,7 @@ def save_attendance(emp_id,name,date,time,image_url,punch_type):
         )
 
         print("OUT SAVED:", r.status_code, r.text)
+
 
 # get employees
 def get_employees():
@@ -227,6 +246,9 @@ def attendance(emp_id):
 
         )
 
+        # SEND WHATSAPP MESSAGE
+        send_whatsapp_group(emp_name,punch_type,date,time)
+
         return redirect(f"/attendance/{emp_id}")
 
 
@@ -279,6 +301,7 @@ def attendance(emp_id):
         out_time=out_time
 
     )
+
 
 # monthly photo report
 @app.route("/monthly_report")
