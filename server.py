@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect
 import os, base64, requests
 import pytz
 from datetime import datetime
-import pywhatkit as kit
 
 app = Flask(__name__)
 
@@ -16,19 +15,27 @@ SUPABASE_KEY = "sb_publishable_9xNlO3TyVXlolLDhjIuuFw_wqdHCTYh"
 
 def send_whatsapp_group(name,punch_type,date,time):
 
+    instance_id = "instance170176"
+
+    token = "1s7j5er6qdeigt2m"
+
+    group_id = "PASTE_GROUP_ID_HERE"
+
     message = f"{name}\n{punch_type}\n{date}\n{time}"
 
-    kit.sendwhatmsg_to_group_instantly(
+    url = f"https://api.ultramsg.com/{instance_id}/messages/chat"
 
-        "Carelon",
+    data = {
 
-        message,
+        "token": token,
 
-        wait_time=10,
+        "to": group_id,
 
-        tab_close=True
+        "body": message
 
-    )
+    }
+
+    requests.post(url, data=data)
 
 
 # upload image to supabase storage
@@ -251,8 +258,6 @@ def attendance(emp_id):
 
         return redirect(f"/attendance/{emp_id}")
 
-
-    # GET TODAY DATA
 
     headers = {
 
